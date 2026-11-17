@@ -10,6 +10,10 @@ export interface ServerEnv {
   busyCalendarIds: string[];
   webhookUrl?: string;
   webhookSecret?: string;
+  mondayToken?: string;
+  mondayBoardId?: string;
+  mondayGroupId?: string;
+  mondayApiUrl: string;
   /** Overridable only so tests can point at a fake Google server. */
   googleApiBase: string;
   googleTokenUrl: string;
@@ -36,6 +40,10 @@ export function getEnv(): ServerEnv {
     busyCalendarIds: provider === "mock" && !calendarId ? ["mock-calendar"] : busyCalendarIds,
     webhookUrl: clean(process.env.BOOKING_WEBHOOK_URL),
     webhookSecret: clean(process.env.BOOKING_WEBHOOK_SECRET),
+    mondayToken: clean(process.env.MONDAY_API_TOKEN),
+    mondayBoardId: clean(process.env.MONDAY_BOARD_ID),
+    mondayGroupId: clean(process.env.MONDAY_GROUP_ID),
+    mondayApiUrl: clean(process.env.MONDAY_API_URL) ?? "https://api.monday.com/v2",
     googleApiBase: clean(process.env.GOOGLE_API_BASE_URL) ?? "https://www.googleapis.com/calendar/v3",
     googleTokenUrl: clean(process.env.GOOGLE_TOKEN_URL) ?? "https://oauth2.googleapis.com/token",
   };

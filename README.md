@@ -127,6 +127,9 @@ The health route returns only ok/error flags — no event data, no busy times, a
 | `GOOGLE_CALENDAR_ID` | yes | the "بوصلة الإنسان" calendar ID |
 | `BUSY_CALENDAR_IDS` | no | extra calendars that block slots, comma-separated — e.g. `primary` |
 | `BOOKING_WEBHOOK_URL` | no | URL that receives each booking as JSON |
+| `MONDAY_API_TOKEN` | no | monday.com personal API token: adds each booking to the board |
+| `MONDAY_BOARD_ID` | no | `5108026540` ("Outreach CRM — Central Team") |
+| `MONDAY_GROUP_ID` | no | group for new leads (default «ردود وحجوزات») |
 | `BOOKING_WEBHOOK_SECRET` | no | signs the webhook body (`X-Signature: sha256=…`) |
 | `NEXT_PUBLIC_SITE_URL` | recommended | `https://your-domain` (Open Graph metadata) |
 | `NEXT_PUBLIC_LOCALE` | no | `ar` (default) |
@@ -195,6 +198,7 @@ Docker, PM2, Render, Railway, Fly, Hostinger and the like. Plain static/PHP-only
 | **Session types** (title, description, duration, `active`, calendar colour) and the individual paths/prices | [`config/sessions.ts`](config/sessions.ts) |
 | **All text on the site** (headlines, form labels, validation messages, privacy page, footer) | [`content/ar.ts`](content/ar.ts) |
 | WhatsApp number | [`config/site.ts`](config/site.ts) |
+| monday.com column mapping | [`config/monday.ts`](config/monday.ts) |
 | Colours / fonts | `app/globals.css` (`@theme`) · `lib/fonts.ts` |
 | Images | replace a file in `public/images/`, then `npm run images` |
 
@@ -256,6 +260,28 @@ Edit, commit, and Vercel redeploys automatically.
 In Make / Zapier: *Webhooks → Custom webhook* → map fields to a monday.com item or a Google Sheets row.
 </details>
 
+### Leads on monday.com
+
+Set `MONDAY_API_TOKEN` and `MONDAY_BOARD_ID`. Every booking then becomes an item on the board
+(group «ردود وحجوزات»). This runs after the visitor's confirmation, so a monday problem never blocks a booking.
+
+| Board column | Booking field |
+|---|---|
+| Name | Organisation (or the person's name) |
+| الشخص / المنصب | Full name — job title |
+| الإيميل · التليفون | Email · phone (+966…) |
+| النشاط | Sector (label created automatically) |
+| المصدر · اللغة | «موقع الحجز» · «العربية» |
+| ميعاد الجلسة | Meeting date and time |
+| ملاحظات | Session, team size, solution, client notes, Meet link, visitor time zone, booking ID |
+
+- **Token:** in monday, click your avatar → **Developers** → **My access tokens** → copy.
+  The token acts as that user, and the board is private, so that user must be a member of it.
+  If possible, use a dedicated user who can only access this board.
+- **Change the mapping:** edit [`config/monday.ts`](config/monday.ts). Set a column to `null` to skip it. To set an
+  initial status, set `status` to the status column ID (`color_mm9644nh`) and `statusLabel` to the label.
+- **Check:** `/api/health` includes `"monday": {"ok": true}` when the token can see the board.
+
 ### Notes and limits
 
 - The rate limiter and slot lock live in memory per server instance. On Vercel Fluid Compute instances are reused,
@@ -282,10 +308,10 @@ npm run test:e2e
 ```
 
 Builds the app, then runs the **real production server and real Google client code** against a fake Google
-OAuth + Calendar API (`tests/fake-google.cjs`) with Playwright (19 checks): health, availability, `primary` busy time
+OAuth + Calendar API (`tests/fake-google.cjs`) with Playwright (20 checks): health, availability, `primary` busy time
 blocking slots, slot display in three time zones, validation messages, a full booking (asserting the exact event
 sent to Google: summary, attendee, `sendUpdates`, `conferenceDataVersion`, colour, description), the slot disappearing,
-the signed webhook, the race "slot taken meanwhile", the honeypot, the rate limit, and that no secrets ship to the browser.
+the signed webhook, the monday.com item and its columns, the race "slot taken meanwhile", the honeypot, the rate limit, and that no secrets ship to the browser.
 Screenshots go to `docs/screenshots/e2e/` (git-ignored). Needs Playwright's Chromium (`npx playwright install chromium` if missing).
 
 Lighthouse (mobile, run against the packaged `deploy/` folder, 3 runs): **Performance 86–99 (median 92) ·
@@ -301,7 +327,7 @@ components/             Header, Footer, Logo (vector from the brochure), booking
 config/                 availability.ts · sessions.ts · site.ts
 content/                ar.ts (all copy) · types.ts · index.ts
 lib/                    time/slot maths, zod schema, formatting, .ics
-lib/server/             Google client, mock calendar, booking, rate limit, webhook (server-only)
+lib/server/             Google client, mock calendar, booking, rate limit, webhook, monday.com (server-only)
 scripts/                get-refresh-token.ts · build-images.mjs · package.mjs
 tests/                  unit tests, fake Google server, e2e
 brand/                  brochure.pdf (design source) · fonts/ (Thmanyah, when added)

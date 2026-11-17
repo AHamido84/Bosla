@@ -6,6 +6,7 @@ import type { BookingErrorResponse } from "@/lib/booking-types";
 import { createBooking, SlotTakenError } from "@/lib/server/booking";
 import { CalendarError } from "@/lib/server/calendar";
 import { clientIp, rateLimit } from "@/lib/server/rate-limit";
+import { syncLeadToMonday } from "@/lib/server/monday";
 import { sendBookingWebhook } from "@/lib/server/webhook";
 
 const noStore = { "cache-control": "no-store" };
@@ -40,7 +41,8 @@ export async function POST(request: Request) {
 
   try {
     const { summary, webhook } = await createBooking(parsed.data);
-    after(() => sendBookingWebhook(webhook));
+    // Both run after the response is sent and never fail the booking.
+    after(() => Promise.all([sendBookingWebhook(webhook), syncLeadToMonday(webhook)]));
     return Response.json({ booking: summary }, { status: 201, headers: noStore });
   } catch (err) {
     if (err instanceof SlotTakenError) return fail(409, { error: "SLOT_TAKEN" });

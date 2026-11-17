@@ -1,6 +1,25 @@
 import { connection } from "next/server";
 import { getCalendar } from "@/lib/server/calendar";
-import { getEnv, missingGoogleEnv } from "@/lib/server/env";
+import { getEnv, missingGoogleEnv, type ServerEnv } from "@/lib/server/env";
+
+/** Confirms the monday token can see the board. Returns only ok/error — no board data. */
+async function mondayCheck(env: ServerEnv): Promise<{ ok: boolean; detail?: string }> {
+  try {
+    const res = await fetch(env.mondayApiUrl, {
+      method: "POST",
+      headers: { "content-type": "application/json", authorization: env.mondayToken! },
+      body: JSON.stringify({ query: `query ($ids: [ID!]) { boards(ids: $ids) { id } }`, variables: { ids: [env.mondayBoardId] } }),
+      signal: AbortSignal.timeout(8000),
+      cache: "no-store",
+    });
+    const json = (await res.json().catch(() => ({}))) as { data?: { boards?: { id: string }[] }; errors?: unknown[] };
+    if (res.status === 401) return { ok: false, detail: "invalid_token" };
+    if (!res.ok || json.errors) return { ok: false, detail: `http_${res.status}` };
+    return json.data?.boards?.length ? { ok: true } : { ok: false, detail: "board_not_found" };
+  } catch {
+    return { ok: false, detail: "unreachable" };
+  }
+}
 
 /**
  * GET /api/health — verifies the OAuth token can be refreshed and every configured
@@ -24,9 +43,12 @@ export async function GET() {
 
   try {
     const result = await getCalendar().health();
+    const checks: Record<string, { ok: boolean; detail?: string }> = { env: { ok: true }, ...result.checks };
+    if (env.mondayToken && env.mondayBoardId) checks.monday = await mondayCheck(env);
+    const ok = Object.values(checks).every((c) => c.ok);
     return Response.json(
-      { ok: result.ok, provider: env.provider, webhook: Boolean(env.webhookUrl), checks: { env: { ok: true }, ...result.checks } },
-      { status: result.ok ? 200 : 503, headers },
+      { ok, provider: env.provider, webhook: Boolean(env.webhookUrl), monday: Boolean(env.mondayToken), checks },
+      { status: ok ? 200 : 503, headers },
     );
   } catch {
     return Response.json({ ok: false, provider: env.provider }, { status: 503, headers });

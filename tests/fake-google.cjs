@@ -50,6 +50,15 @@ function startFakeGoogle({ port, calendarId, refreshToken }) {
       else (state.busy[calendar] ??= []).push({ start, end });
       return send(res, 200, { ok: true });
     }
+    if (req.method === "POST" && path === "/monday") {
+      if (req.headers.authorization !== "monday-test-token") return send(res, 401, { error_message: "Not Authenticated" });
+      const body = JSON.parse(raw);
+      if (body.query.includes("create_item")) {
+        (state.monday ??= []).push(body.variables);
+        return send(res, 200, { data: { create_item: { id: "998877" } } });
+      }
+      return send(res, 200, { data: { boards: body.variables.ids.includes("5108026540") ? [{ id: "5108026540" }] : [] } });
+    }
     if (req.method === "POST" && path === "/webhook") {
       state.webhooks.push({ headers: req.headers, body: JSON.parse(raw) });
       return send(res, 200, { ok: true });

@@ -82,13 +82,16 @@ async function fillOrgForm(page, { email = "client@example.com" } = {}) {
     BOOKING_WEBHOOK_SECRET: "whsec",
     GOOGLE_API_BASE_URL: `http://127.0.0.1:${G_PORT}/calendar/v3`,
     GOOGLE_TOKEN_URL: `http://127.0.0.1:${G_PORT}/token`,
+    MONDAY_API_TOKEN: "monday-test-token",
+    MONDAY_BOARD_ID: "5108026540",
+    MONDAY_API_URL: `http://127.0.0.1:${G_PORT}/monday`,
   };
   // E2E_DEPLOY_DIR=/path/to/deploy → test the packaged folder exactly as a host runs it:
   // `node server.js`, configured only through a .env file in that folder.
   const deployDir = process.env.E2E_DEPLOY_DIR;
   let app;
   if (deployDir) {
-    const keys = Object.keys(env).filter((k) => /^(CALENDAR_PROVIDER|GOOGLE_|BUSY_|BOOKING_)/.test(k));
+    const keys = Object.keys(env).filter((k) => /^(CALENDAR_PROVIDER|GOOGLE_|BUSY_|BOOKING_|MONDAY_)/.test(k));
     fs.writeFileSync(path.join(deployDir, ".env"), keys.map((k) => `${k}=${env[k]}`).join("\n") + "\n");
     const bare = { PATH: process.env.PATH, HOME: process.env.HOME, PORT: String(APP_PORT), HOSTNAME: "127.0.0.1", NODE_ENV: "production" };
     app = spawn(process.execPath, ["server.js"], { cwd: deployDir, env: bare, stdio: ["ignore", "pipe", "pipe"] });
@@ -112,6 +115,7 @@ async function fillOrgForm(page, { email = "client@example.com" } = {}) {
       assert.equal(j.ok, true);
       assert.equal(j.checks.token.ok, true);
       assert.equal(j.checks.bookingCalendar.ok, true);
+      assert.equal(j.checks.monday.ok, true, "monday token + board reachable");
       const s = JSON.stringify(j);
       assert.ok(!s.includes(CAL), "calendar id must not leak");
       assert.ok(!/"busy"|summary|description|dateTime/i.test(s), "no event data");
@@ -267,6 +271,26 @@ async function fillOrgForm(page, { email = "client@example.com" } = {}) {
       assert.equal(w.body.meetLink, booked.meet);
       assert.equal(w.body.client.email, "client@example.com");
       assert.match(w.headers["x-signature"], /^sha256=[0-9a-f]{64}$/);
+    });
+
+    await step("monday.com: lead item created on the board with mapped columns", async () => {
+      const st = await (await fetch(`http://127.0.0.1:${G_PORT}/__state`)).json();
+      assert.equal(st.monday?.length, 1, "one create_item");
+      const v = st.monday[0];
+      assert.equal(v.board, "5108026540");
+      assert.equal(v.group, "group_mm96fs4");
+      assert.equal(v.name, "هيئة تجريبية");
+      const cols = JSON.parse(v.values);
+      assert.equal(cols.text_mm961w74, "سارة العتيبي — مديرة الموارد البشرية");
+      assert.deepEqual(cols.email_mm96wbf5, { email: "client@example.com", text: "client@example.com" });
+      assert.equal(cols.text_mm969rgh, "+966512345678");
+      assert.deepEqual(cols.dropdown_mm965s25, { labels: ["حكومي"] });
+      assert.deepEqual(cols.dropdown_mm96cgte, { labels: ["موقع الحجز"] });
+      const iso = new Date(booked.start).toISOString();
+      assert.deepEqual(cols.date_mm96mrk8, { date: iso.slice(0, 10), time: iso.slice(11, 19) });
+      for (const s of ["101–500", "برنامج التحليل والتطوير القيادي", "نرغب ببرنامج", booked.meet]) {
+        assert.ok(cols.long_text_mm96yvmy.text.includes(s), `notes missing ${s}`);
+      }
     });
 
     await step("race: slot taken meanwhile → friendly message + slots refresh", async () => {
