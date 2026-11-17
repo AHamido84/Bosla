@@ -20,7 +20,7 @@ const APP_PORT = 3100;
 const G_PORT = 4010;
 const BASE = `http://127.0.0.1:${APP_PORT}`;
 const CAL = "testcal123@group.calendar.google.com";
-const SHOTS = path.join(__dirname, "..", "docs", "screenshots");
+const SHOTS = path.join(__dirname, "..", "docs", "screenshots", "e2e");
 const LOCALE = "ar-SA-u-nu-latn-ca-gregory";
 fs.mkdirSync(SHOTS, { recursive: true });
 
@@ -83,7 +83,19 @@ async function fillOrgForm(page, { email = "client@example.com" } = {}) {
     GOOGLE_API_BASE_URL: `http://127.0.0.1:${G_PORT}/calendar/v3`,
     GOOGLE_TOKEN_URL: `http://127.0.0.1:${G_PORT}/token`,
   };
-  const app = spawn(process.execPath, [require.resolve("next/dist/bin/next"), "start", "-p", String(APP_PORT)], { env, stdio: ["ignore", "pipe", "pipe"] });
+  // E2E_DEPLOY_DIR=/path/to/deploy → test the packaged folder exactly as a host runs it:
+  // `node server.js`, configured only through a .env file in that folder.
+  const deployDir = process.env.E2E_DEPLOY_DIR;
+  let app;
+  if (deployDir) {
+    const keys = Object.keys(env).filter((k) => /^(CALENDAR_PROVIDER|GOOGLE_|BUSY_|BOOKING_)/.test(k));
+    fs.writeFileSync(path.join(deployDir, ".env"), keys.map((k) => `${k}=${env[k]}`).join("\n") + "\n");
+    const bare = { PATH: process.env.PATH, HOME: process.env.HOME, PORT: String(APP_PORT), HOSTNAME: "127.0.0.1", NODE_ENV: "production" };
+    app = spawn(process.execPath, ["server.js"], { cwd: deployDir, env: bare, stdio: ["ignore", "pipe", "pipe"] });
+    console.log(`(testing packaged folder ${deployDir})`);
+  } else {
+    app = spawn(process.execPath, [require.resolve("next/dist/bin/next"), "start", "-p", String(APP_PORT)], { env, stdio: ["ignore", "pipe", "pipe"] });
+  }
   let appLog = "";
   app.stdout.on("data", (d) => (appLog += d));
   app.stderr.on("data", (d) => (appLog += d));
@@ -376,6 +388,6 @@ async function fillOrgForm(page, { email = "client@example.com" } = {}) {
     fake.server.close();
     if (process.exitCode) console.log("\n--- app log ---\n" + appLog.slice(-4000));
     const pass = results.filter((r) => r[0] === "✓").length;
-    console.log(`\n${pass}/${results.length} passed. Screenshots → docs/screenshots/\n`);
+    console.log(`\n${pass}/${results.length} passed. Screenshots → docs/screenshots/e2e/\n`);
   }
 })();

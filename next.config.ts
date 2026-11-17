@@ -12,10 +12,20 @@ const nextConfig: NextConfig = {
   cacheComponents: true,
   partialPrefetching: true,
   poweredByHeader: false,
+  // Self-contained server in .next/standalone → assembled into deploy/ by `npm run package`.
+  output: "standalone",
+  // The custom image loader means sharp is never used at runtime; keeping its native
+  // binaries out of the bundle makes deploy/ platform-independent (and 46 MB smaller).
+  outputFileTracingExcludes: {
+    "*": ["node_modules/sharp/**", "node_modules/@img/**", "node_modules/@emnapi/**"],
+  },
   images: {
-    formats: ["image/avif", "image/webp"],
-    deviceSizes: [360, 414, 640, 768, 1024, 1280],
-    imageSizes: [88, 112, 180, 192, 288, 304, 352, 448],
+    // Pre-generated WebP variants (scripts/build-images.mjs) instead of a runtime optimizer,
+    // so the deploy folder has no native dependencies and runs on any Node host.
+    loader: "custom",
+    loaderFile: "./lib/image-loader.ts",
+    deviceSizes: [384, 512, 640, 960],
+    imageSizes: [128, 256],
   },
   async headers() {
     return [{ source: "/:path*", headers: securityHeaders }];

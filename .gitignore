@@ -45,3 +45,8 @@ next-env.d.ts
 # local scratch
 /test-results/
 /screenshots/tmp/
+
+# deploy bundle (build output — regenerate with npm run package)
+/deploy/
+/deploy.zip
+/docs/screenshots/e2e/
