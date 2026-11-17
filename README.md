@@ -142,6 +142,11 @@ vercel env add GOOGLE_REFRESH_TOKEN production
 
 3. **Deploy**, then open `https://your-domain/api/health` to confirm.
 
+> **Vercel shows "404: NOT_FOUND" on every page** (but `/logo.svg` loads)? The project was deployed as a
+> static site, which happens when it's imported before the code is in the repo. `vercel.json` pins
+> `"framework": "nextjs"`. If it still happens, check **Settings → Build and Deployment**:
+> Framework Preset **Next.js**, with no overrides for Build Command or Output Directory. Then click **Redeploy**.
+
 All of `.env.example` is documented inline. Secrets are only read in server route handlers
 (`lib/server/*` imports `server-only`), so none of them can reach the browser bundle.
 
