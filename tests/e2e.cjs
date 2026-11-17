@@ -115,6 +115,7 @@ async function fillOrgForm(page, { email = "client@example.com" } = {}) {
       assert.equal(j.ok, true);
       assert.equal(j.checks.token.ok, true);
       assert.equal(j.checks.bookingCalendar.ok, true);
+      assert.equal(j.checks.bookingCalendarWrite.ok, true, "token can write to the booking calendar");
       assert.equal(j.checks.monday.ok, true, "monday token + board reachable");
       const s = JSON.stringify(j);
       assert.ok(!s.includes(CAL), "calendar id must not leak");

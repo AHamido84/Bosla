@@ -98,6 +98,7 @@ function startFakeGoogle({ port, calendarId, refreshToken }) {
 
       // list (used for per-day caps)
       if (req.method === "GET" && !m[2]) {
+        if (url.searchParams.get("fields") === "accessRole") return send(res, 200, { accessRole: "owner" });
         const prop = url.searchParams.get("privateExtendedProperty");
         const items = state.events
           .filter((e) => (prop === "hcBooking=1" ? e.site : true))

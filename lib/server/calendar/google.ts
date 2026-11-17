@@ -189,6 +189,22 @@ export class GoogleCalendarProvider implements CalendarProvider {
         checks[label] = { ok: false, detail: (err as CalendarError).code ?? "error" };
       }
     }
+    // Can this token create events on the booking calendar? Ask only for the token's access
+    // role (no event data). Needs the calendar.events scope and owner/writer access.
+    try {
+      const { accessRole } = await this.api<{ accessRole?: string }>(
+        `/calendars/${encodeURIComponent(this.env.calendarId!)}/events?maxResults=1&fields=accessRole`,
+      );
+      checks.bookingCalendarWrite =
+        accessRole === "owner" || accessRole === "writer"
+          ? { ok: true }
+          : { ok: false, detail: `access_role_${accessRole ?? "unknown"}` };
+    } catch (err) {
+      const e = err as CalendarError;
+      console.error("[health] bookingCalendarWrite:", e.message);
+      const scope = /insufficient authentication scopes/i.test(e.message);
+      checks.bookingCalendarWrite = { ok: false, detail: scope ? "missing_scope_calendar.events" : (e.code ?? "error") };
+    }
     return { ok: Object.values(checks).every((c) => c.ok), checks };
   }
 }
