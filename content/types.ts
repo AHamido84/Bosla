@@ -90,7 +90,7 @@ export interface Content {
     hints: { email: string; phone: string };
     sectors: Option<"government" | "education" | "private" | "nonprofit">[];
     employeeRanges: Option<"1-20" | "21-100" | "101-500" | "500+">[];
-    solutions: Option<"professional" | "leadership" | "unsure">[];
+    solutions: Option<"self" | "leadership" | "professional" | "unsure">[];
     paths: Option<"consultative" | "specialized" | "unsure">[];
     consentBefore: string;
     consentLink: string;
