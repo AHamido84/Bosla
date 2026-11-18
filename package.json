@@ -11,7 +11,7 @@
     "typecheck": "tsc --noEmit",
     "test": "tsx --test tests/*.test.ts",
     "test:e2e": "next build && node tests/e2e.cjs",
-    "google:token": "tsx scripts/get-refresh-token.ts",
+    "google:token": "node scripts/google-token.mjs",
     "images": "node scripts/build-images.mjs",
     "package": "next build && node scripts/package.mjs"
   },

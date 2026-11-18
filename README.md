@@ -77,7 +77,19 @@ seeded busy blocks, so you can click through the whole flow and get a fake Meet 
 > We use OAuth with the calendar owner's account rather than a service account: on a regular Gmail
 > account a service account cannot invite attendees or create Meet links without Domain-Wide Delegation.
 
-### 4. Get the refresh token (run once, locally)
+### 4. Get the refresh token (run once)
+
+**Easiest, no install: Google Cloud Shell.** In Google Cloud Console click the `>_` icon (top right) and run:
+
+```bash
+curl -fsSLO https://raw.githubusercontent.com/AHamido84/Bosla/claude/zealous-mayer-26kb2l/scripts/google-token.mjs && node google-token.mjs
+```
+
+The script asks for the Client ID and secret, then prints a link. Open it and sign in with the calendar's owner account.
+Google then sends the browser to `http://127.0.0.1…`, which can't load from Cloud Shell. Copy that whole address from
+the address bar and paste it into the terminal. The script prints `GOOGLE_REFRESH_TOKEN` and your calendar IDs.
+
+**Or on your computer** (Node 20+), from a clone of the repo:
 
 ```bash
 cp .env.example .env.local
@@ -333,7 +345,7 @@ config/                 availability.ts · sessions.ts · site.ts
 content/                ar.ts (all copy) · types.ts · index.ts
 lib/                    time/slot maths, zod schema, formatting, .ics
 lib/server/             Google client, mock calendar, booking, rate limit, webhook, monday.com (server-only)
-scripts/                get-refresh-token.ts · build-images.mjs · package.mjs
+scripts/                google-token.mjs · build-images.mjs · package.mjs
 tests/                  unit tests, fake Google server, e2e
 brand/                  brochure.pdf (design source) · fonts/ (Thmanyah, when added)
 public/images/          3D renders extracted from the brochure (WebP, alpha); _w/ = pre-sized variants
