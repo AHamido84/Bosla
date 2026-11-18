@@ -131,8 +131,12 @@ async function fillOrgForm(page, { email = "client@example.com" } = {}) {
       assert.equal(j.companyTimeZone, "Asia/Riyadh");
       assert.ok(j.slots.length > 20);
       for (const s of j.slots) {
-        const h = Number(new Intl.DateTimeFormat("en-GB", { timeZone: "Asia/Riyadh", hour: "2-digit", hourCycle: "h23" }).format(new Date(s.start)));
-        assert.ok(h >= 10 && h < 17, `slot outside hours: ${s.start}`);
+        const [h, m] = new Intl.DateTimeFormat("en-GB", { timeZone: "Asia/Riyadh", hour: "2-digit", minute: "2-digit", hourCycle: "h23" })
+          .format(new Date(s.start))
+          .split(":")
+          .map(Number);
+        const mins = h * 60 + m;
+        assert.ok(mins >= 8 * 60 + 30 && mins <= 22 * 60 + 30, `slot outside 08:30–22:30 Riyadh: ${s.start}`);
         assert.equal(Date.parse(s.end) - Date.parse(s.start), 30 * 60000);
       }
       slots = j.slots;

@@ -29,8 +29,9 @@ export interface AvailabilityConfig {
 export const availability: AvailabilityConfig = {
   timeZone: "Asia/Riyadh",
   workingDays: [0, 1, 2, 3, 4], // Sun–Thu
-  startTime: "10:00",
-  endTime: "17:00",
+  startTime: "08:30",
+  // Sessions must END by endTime: 23:00 makes 22:30 the last 30-minute slot shown.
+  endTime: "23:00",
   breaks: [],
   blockedDates: [],
   slotIntervalMinutes: 30,
