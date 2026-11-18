@@ -61,8 +61,8 @@ async function fillOrgForm(page, { email = "client@example.com" } = {}) {
   await page.getByLabel("اسم الجهة").fill("هيئة تجريبية");
   await page.getByText("حكومي", { exact: true }).click();
   await page.getByText("101–500", { exact: true }).click();
-  await page.getByText("أبي أفهم كيف أقدر أطوّر قيادات فريقي.").click();
-  await page.getByLabel("عندك شيء تحب نعرفه قبل الجلسة؟").fill("نرغب ببرنامج لفريق القيادات الوسطى.");
+  await page.getByText("أبي أطوّر قيادات الجهة.").click();
+  await page.getByLabel("عندك شيء تحب نعرفه قبل اللقاء؟").fill("نرغب ببرنامج لفريق القيادات الوسطى.");
   await page.locator("#consent").check();
 }
 
@@ -187,7 +187,7 @@ async function fillOrgForm(page, { email = "client@example.com" } = {}) {
       const page = await browser.newPage();
       await page.goto(BASE);
       await page.locator('ul[aria-labelledby="slots-heading"] button').first().waitFor();
-      await page.getByRole("button", { name: "أكد حجزك المجاني" }).click();
+      await page.getByRole("button", { name: "أكد موعدك" }).click();
       for (const msg of [
         "يرجى اختيار يوم ووقت من التقويم",
         "يرجى كتابة الاسم الكامل",
@@ -199,7 +199,7 @@ async function fillOrgForm(page, { email = "client@example.com" } = {}) {
       }
       assert.ok((await page.getByText("يرجى اختيار أحد الخيارات").count()) >= 3);
       await page.locator("#phone").fill("12345");
-      await page.getByRole("button", { name: "أكد حجزك المجاني" }).click();
+      await page.getByRole("button", { name: "أكد موعدك" }).click();
       assert.ok(await page.getByText("رقم الجوال السعودي يتكون من 9 أرقام").isVisible());
       await page.setViewportSize({ width: 390, height: 844 });
       await page.locator("#fullName").scrollIntoViewIfNeeded();
@@ -216,7 +216,7 @@ async function fillOrgForm(page, { email = "client@example.com" } = {}) {
       await first.click();
       assert.equal(await first.getAttribute("aria-pressed"), "true");
       await fillOrgForm(page);
-      await page.getByRole("button", { name: "أكد حجزك المجاني" }).click();
+      await page.getByRole("button", { name: "أكد موعدك" }).click();
       await page.waitForURL("**/confirmed");
       await page.getByRole("heading", { name: "تم حجز موعدك بنجاح!" }).waitFor();
       const meet = page.locator('a[href^="https://meet.google.com/"]').first();
@@ -254,7 +254,7 @@ async function fillOrgForm(page, { email = "client@example.com" } = {}) {
       assert.equal(body.conferenceData.createRequest.conferenceSolutionKey.type, "hangoutsMeet");
       assert.ok(body.conferenceData.createRequest.requestId);
       assert.equal(body.extendedProperties.private.hcBooking, "1");
-      for (const s of ["المسمى الوظيفي: مديرة الموارد البشرية", "الجوال: +966512345678", "القطاع: حكومي", "عدد الموظفين ضمن النطاق: 101–500", "الحل المهتم به: أبي أفهم كيف أقدر أطوّر قيادات فريقي.", "ملاحظات: نرغب"]) {
+      for (const s of ["المسمى الوظيفي: مديرة الموارد البشرية", "الجوال: +966512345678", "القطاع: حكومي", "عدد الموظفين ضمن النطاق: 101–500", "الحل المهتم به: أبي أطوّر قيادات الجهة.", "ملاحظات: نرغب"]) {
         assert.ok(body.description.includes(s), `description missing "${s}"`);
       }
     });
@@ -293,7 +293,7 @@ async function fillOrgForm(page, { email = "client@example.com" } = {}) {
       assert.deepEqual(cols.dropdown_mm96cgte, { labels: ["موقع الحجز"] });
       const iso = new Date(booked.start).toISOString();
       assert.deepEqual(cols.date_mm96mrk8, { date: iso.slice(0, 10), time: iso.slice(11, 19) });
-      for (const s of ["101–500", "أبي أفهم كيف أقدر أطوّر قيادات فريقي", "نرغب ببرنامج", booked.meet]) {
+      for (const s of ["101–500", "أبي أطوّر قيادات الجهة", "نرغب ببرنامج", booked.meet]) {
         assert.ok(cols.long_text_mm96yvmy.text.includes(s), `notes missing ${s}`);
       }
     });
@@ -312,7 +312,7 @@ async function fillOrgForm(page, { email = "client@example.com" } = {}) {
         body: JSON.stringify({ calendar: CAL, start: visibleDay.start, end: visibleDay.end }),
       });
       await fillOrgForm(page, { email: "second@example.com" });
-      await page.getByRole("button", { name: "أكد حجزك المجاني" }).click();
+      await page.getByRole("button", { name: "أكد موعدك" }).click();
       await page.getByText("عذرًا، تم حجز هذا الموعد للتو").waitFor();
       assert.ok(page.url().endsWith("/") || !page.url().includes("confirmed"));
       // Refreshed list no longer offers the taken slot
