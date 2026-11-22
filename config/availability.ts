@@ -36,7 +36,8 @@ export const availability: AvailabilityConfig = {
   blockedDates: [],
   slotIntervalMinutes: 30,
   bufferMinutes: 15,
-  minNoticeHours: 12,
+  // 0 = the next slot after "now" is bookable (same-day bookings allowed).
+  minNoticeHours: 0,
   horizonDays: 21,
   maxSessionsPerDay: 4,
 };
