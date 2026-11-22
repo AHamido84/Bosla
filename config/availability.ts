@@ -36,7 +36,7 @@ export const availability: AvailabilityConfig = {
   blockedDates: [],
   slotIntervalMinutes: 30,
   bufferMinutes: 15,
-  minNoticeHours: 12,
+  minNoticeHours: 2,
   horizonDays: 21,
   maxSessionsPerDay: 4,
 };
