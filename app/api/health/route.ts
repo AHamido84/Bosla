@@ -46,8 +46,15 @@ export async function GET() {
     const checks: Record<string, { ok: boolean; detail?: string }> = { env: { ok: true }, ...result.checks };
     if (env.mondayToken && env.mondayBoardId) checks.monday = await mondayCheck(env);
     const ok = Object.values(checks).every((c) => c.ok);
+    // Diagnostics without secrets: is BUSY_CALENDAR_IDS reaching this deployment, and which build is live?
+    const config = {
+      busyCalendarIdsSet: Boolean(process.env.BUSY_CALENDAR_IDS?.trim()),
+      calendarsChecked: env.busyCalendarIds.length,
+      vercelEnv: process.env.VERCEL_ENV ?? null,
+      commit: process.env.VERCEL_GIT_COMMIT_SHA?.slice(0, 7) ?? null,
+    };
     return Response.json(
-      { ok, provider: env.provider, webhook: Boolean(env.webhookUrl), monday: Boolean(env.mondayToken), checks },
+      { ok, provider: env.provider, webhook: Boolean(env.webhookUrl), monday: Boolean(env.mondayToken), config, checks },
       { status: ok ? 200 : 503, headers },
     );
   } catch {
