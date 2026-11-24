@@ -1,4 +1,5 @@
 import { connection } from "next/server";
+import { availability } from "@/config/availability";
 import { getCalendar } from "@/lib/server/calendar";
 import { getEnv, missingGoogleEnv, type ServerEnv } from "@/lib/server/env";
 
@@ -49,6 +50,7 @@ export async function GET() {
     // Diagnostics without secrets: is BUSY_CALENDAR_IDS reaching this deployment, and which build is live?
     const config = {
       busyCalendarIdsSet: Boolean(process.env.BUSY_CALENDAR_IDS?.trim()),
+      blockPrimaryCalendar: availability.blockPrimaryCalendar,
       calendarsChecked: env.busyCalendarIds.length,
       vercelEnv: process.env.VERCEL_ENV ?? null,
       commit: process.env.VERCEL_GIT_COMMIT_SHA?.slice(0, 7) ?? null,

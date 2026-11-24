@@ -24,6 +24,11 @@ export interface AvailabilityConfig {
   horizonDays: number;
   /** Max sessions booked through the site per day (0 = unlimited). */
   maxSessionsPerDay: number;
+  /**
+   * Also treat the authorising account's PRIMARY calendar as busy time. That is where
+   * Google's "Out of office" and personal events live. Added to BUSY_CALENDAR_IDS.
+   */
+  blockPrimaryCalendar: boolean;
 }
 
 export const availability: AvailabilityConfig = {
@@ -40,4 +45,5 @@ export const availability: AvailabilityConfig = {
   minNoticeHours: 0,
   horizonDays: 21,
   maxSessionsPerDay: 4,
+  blockPrimaryCalendar: true,
 };

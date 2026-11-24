@@ -1,4 +1,5 @@
 import "server-only";
+import { availability } from "@/config/availability";
 
 /** Server-only configuration. Never import this from a client component. */
 export interface ServerEnv {
@@ -29,7 +30,9 @@ export function getEnv(): ServerEnv {
     .map((s) => s.trim())
     .filter(Boolean);
   // The booking calendar ALWAYS blocks slots, even if BUSY_CALENDAR_IDS omits it.
-  const busyCalendarIds = Array.from(new Set([...(calendarId ? [calendarId] : []), ...extra]));
+  const busyCalendarIds = Array.from(
+    new Set([...(calendarId ? [calendarId] : []), ...(availability.blockPrimaryCalendar ? ["primary"] : []), ...extra]),
+  );
 
   return {
     provider,
